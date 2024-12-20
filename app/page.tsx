@@ -66,7 +66,7 @@ const BucketList = () => {
   type ThemeKey = keyof typeof themes; // Ensures theme is one of the keys of `themes`
   const [items, setItems] = useState(defaultItems);
   const [newItem, setNewItem] = useState("");
-  const [theme, setTheme] = useState<ThemeKey>("light");
+  const [theme, setTheme] = useState<ThemeKey>("nature");
   const [editingId, setEditingId] = useState<string | null>(null); // Explicitly typing the ID
   const [editText, setEditText] = useState("");
 
