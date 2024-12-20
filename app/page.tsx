@@ -63,9 +63,10 @@ const BucketList = () => {
     },
   };
 
+  type ThemeKey = keyof typeof themes; // Ensures theme is one of the keys of `themes`
   const [items, setItems] = useState(defaultItems);
   const [newItem, setNewItem] = useState("");
-  const [theme, setTheme] = useState("light");
+  const [theme, setTheme] = useState<ThemeKey>("light");
   const [editingId, setEditingId] = useState<string | null>(null); // Explicitly typing the ID
   const [editText, setEditText] = useState("");
 
@@ -74,7 +75,7 @@ const BucketList = () => {
     const saved = localStorage.getItem("bucketList");
     const savedTheme = localStorage.getItem("theme");
     if (saved) setItems(JSON.parse(saved));
-    if (savedTheme) setTheme(savedTheme);
+    if (savedTheme) setTheme(savedTheme as ThemeKey); // Type casting here
   }, []);
 
   // Save data to localStorage only on the client side
@@ -144,11 +145,11 @@ const BucketList = () => {
           <h1 className="text-4xl font-bold">My Bucket List</h1>
           <div className="flex gap-2">
             {Object.keys(themes).map((key) => {
-              const Icon = icons[key as keyof typeof icons]; // TypeScript key typing
+              const Icon = icons[key as ThemeKey]; // TypeScript key typing
               return (
                 <button
                   key={key}
-                  onClick={() => setTheme(key)}
+                  onClick={() => setTheme(key as ThemeKey)} // Type casting here
                   className={`p-2 rounded-lg ${
                     theme === key
                       ? themes[theme].button
