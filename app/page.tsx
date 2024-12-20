@@ -1,113 +1,266 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+import {
+  Sun,
+  Moon,
+  Leaf,
+  Trash2,
+  Plus,
+  Check,
+  X,
+  Edit2,
+  Coffee,
+} from "lucide-react";
+
+const BucketList = () => {
+  const defaultItems = [
+    { id: "1", text: "Skydive from 15,000 feet", completed: false },
+    { id: "2", text: "Achieve Doing 40 Pushups in one day", completed: false },
+    {
+      id: "3",
+      text: "You can delete this and add more! Designed & Developed By Pavan",
+      completed: false,
+    },
+  ];
+
+  const themes = {
+    light: {
+      name: "Light",
+      bg: "bg-gray-50",
+      card: "bg-white",
+      text: "text-gray-900",
+      border: "border-gray-200",
+      button: "bg-blue-500 hover:bg-blue-600",
+      secondaryButton: "bg-gray-200 hover:bg-gray-300",
+    },
+    dark: {
+      name: "Dark",
+      bg: "bg-gray-900",
+      card: "bg-gray-800",
+      text: "text-gray-100",
+      border: "border-gray-700",
+      button: "bg-blue-600 hover:bg-blue-700",
+      secondaryButton: "bg-gray-700 hover:bg-gray-600",
+    },
+    nature: {
+      name: "Nature",
+      bg: "bg-green-50",
+      card: "bg-white",
+      text: "text-green-900",
+      border: "border-green-200",
+      button: "bg-green-600 hover:bg-green-700",
+      secondaryButton: "bg-green-100 hover:bg-green-200",
+    },
+    desert: {
+      name: "Desert",
+      bg: "bg-yellow-50",
+      card: "bg-white",
+      text: "text-yellow-900",
+      border: "border-yellow-200",
+      button: "bg-yellow-600 hover:bg-yellow-700",
+      secondaryButton: "bg-yellow-100 hover:bg-yellow-200",
+    },
+  };
+
+  const [items, setItems] = useState(defaultItems);
+  const [newItem, setNewItem] = useState("");
+  const [theme, setTheme] = useState("light");
+  const [editingId, setEditingId] = useState<string | null>(null); // Explicitly typing the ID
+  const [editText, setEditText] = useState("");
+
+  // Load data from localStorage only on the client side (inside useEffect)
+  useEffect(() => {
+    const saved = localStorage.getItem("bucketList");
+    const savedTheme = localStorage.getItem("theme");
+    if (saved) setItems(JSON.parse(saved));
+    if (savedTheme) setTheme(savedTheme);
+  }, []);
+
+  // Save data to localStorage only on the client side
+  useEffect(() => {
+    localStorage.setItem("bucketList", JSON.stringify(items));
+    localStorage.setItem("theme", theme);
+  }, [items, theme]);
+
+  const addItem = () => {
+    if (newItem.trim()) {
+      setItems([
+        ...items,
+        { id: new Date().toISOString(), text: newItem, completed: false },
+      ]);
+      setNewItem("");
+    }
+  };
+
+  const toggleComplete = (id: string) => {
+    // Ensure the id is a string
+    setItems(
+      items.map((item) =>
+        item.id === id ? { ...item, completed: !item.completed } : item
+      )
+    );
+  };
+
+  const deleteItem = (id: string) => {
+    // Ensure the id is a string
+    setItems(items.filter((item) => item.id !== id));
+  };
+
+  const startEdit = (item: { id: string; text: string }) => {
+    // Ensure typing for item
+    setEditingId(item.id);
+    setEditText(item.text);
+  };
+
+  const saveEdit = () => {
+    if (editText.trim()) {
+      setItems(
+        items.map((item) =>
+          item.id === editingId ? { ...item, text: editText } : item
+        )
+      );
+      setEditingId(null);
+    }
+  };
+
+  const completedCount = items.filter((item) => item.completed).length;
+  const progressPercentage = (completedCount / items.length) * 100 || 0;
+
+  const icons = {
+    light: Sun,
+    dark: Moon,
+    nature: Leaf,
+    desert: Coffee,
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
+    <div
+      className={`min-h-screen p-8 transition-colors duration-500 ${themes[theme].bg} ${themes[theme].text}`}
+    >
+      {/* Header and Theme Switcher */}
+      <div className="max-w-4xl mx-auto mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-4xl font-bold">My Bucket List</h1>
+          <div className="flex gap-2">
+            {Object.keys(themes).map((key) => {
+              const Icon = icons[key as keyof typeof icons]; // TypeScript key typing
+              return (
+                <button
+                  key={key}
+                  onClick={() => setTheme(key)}
+                  className={`p-2 rounded-lg ${
+                    theme === key
+                      ? themes[theme].button
+                      : themes[theme].secondaryButton
+                  }`}
+                >
+                  <Icon size={20} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div
+          className={`w-full h-4 rounded-full ${themes[theme].card} ${themes[theme].border} border mb-6`}
+        >
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500"
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
+        <p className="text-center mb-6">
+          {completedCount} of {items.length} completed (
+          {Math.round(progressPercentage)}%)
         </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* Add New Item Form */}
+        <div className="flex gap-2 mb-8">
+          <input
+            type="text"
+            value={newItem}
+            onChange={(e) => setNewItem(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && addItem()}
+            placeholder="Add a new bucket list item..."
+            className={`flex-1 p-3 rounded-lg ${themes[theme].card} ${themes[theme].border} border focus:outline-none focus:ring-2 focus:ring-blue-500`}
+          />
+          <button
+            onClick={addItem}
+            className={`p-3 rounded-lg ${themes[theme].button} text-white`}
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+            <Plus size={20} />
+          </button>
+        </div>
+
+        {/* Bucket List Items */}
+        <div className="space-y-4">
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className={`p-4 rounded-lg ${themes[theme].card} ${
+                themes[theme].border
+              } border flex items-center justify-between gap-4 transition-all duration-200 ${
+                item.completed ? "opacity-70" : ""
+              }`}
+            >
+              {editingId === item.id ? (
+                <div className="flex-1 flex gap-2">
+                  <input
+                    type="text"
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    className={`flex-1 p-2 rounded ${themes[theme].bg} ${themes[theme].border} border`}
+                  />
+                  <button
+                    onClick={saveEdit}
+                    className={`p-2 rounded ${themes[theme].button} text-white`}
+                  >
+                    <Check size={16} />
+                  </button>
+                  <button
+                    onClick={() => setEditingId(null)}
+                    className={`p-2 rounded ${themes[theme].secondaryButton}`}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <span
+                    className={`flex-1 ${item.completed ? "line-through" : ""}`}
+                  >
+                    {item.text}
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => toggleComplete(item.id)}
+                      className={`p-2 rounded ${themes[theme].button} text-white`}
+                    >
+                      <Check size={16} />
+                    </button>
+                    <button
+                      onClick={() => startEdit(item)}
+                      className={`p-2 rounded ${themes[theme].secondaryButton}`}
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => deleteItem(item.id)}
+                      className={`p-2 rounded ${themes[theme].secondaryButton} text-red-500`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
-}
+};
+
+export default BucketList;
